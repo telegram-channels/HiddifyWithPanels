@@ -1,12 +1,11 @@
-// payment_methods_view_model.dart
-
-// ignore_for_file: avoid_dynamic_calls
-
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
+
 import 'package:hiddify/features/panel/xboard/services/monitor_pay_status.dart';
 import 'package:hiddify/features/panel/xboard/services/purchase_service.dart';
 import 'package:hiddify/features/panel/xboard/utils/storage/token_storage.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PaymentMethodsViewModel extends ChangeNotifier {
   final String tradeNo;
@@ -28,6 +27,13 @@ class PaymentMethodsViewModel extends ChangeNotifier {
       return;
     }
 
+    // 集成EPay：判断是否为epay方式
+    if (selectedMethod['id'] == 'epay') {
+      await payWithEPay(totalAmount, tradeNo);
+      return;
+    }
+
+    // 其它支付方式逻辑，保持原有代码
     final accessToken = await getToken();
     if (accessToken == null) {
       if (kDebugMode) {
@@ -80,7 +86,38 @@ class PaymentMethodsViewModel extends ChangeNotifier {
         print('支付错误: $e');
         print('堆栈: $stack');
       }
-      // 可选: 你可以在这里通知 UI 层显示错误提示
+    }
+  }
+
+  // 易支付专用方法
+  Future<void> payWithEPay(double amount, String tradeNo) async {
+    try {
+      final resp = await http.post(
+        Uri.parse('https://88cloud.dpdns.org/api/v1/guest/payment/create/epay'),
+        body: {
+          'total_amount': (amount * 100).toInt().toString(),
+          'trade_no': tradeNo,
+          // 不用传return_url
+        },
+      );
+
+      if (resp.statusCode == 200) {
+        final payUrl = jsonDecode(resp.body)['url'];
+        if (await canLaunchUrl(Uri.parse(payUrl))) {
+          await launchUrl(Uri.parse(payUrl), mode: LaunchMode.externalApplication);
+          // 支付跳转后，开始轮询订单状态
+          monitorOrderStatus();
+        } else {
+          if (kDebugMode) print('无法打开支付链接');
+        }
+      } else {
+        if (kDebugMode) print('下单失败：${resp.body}');
+      }
+    } catch (e, stack) {
+      if (kDebugMode) {
+        print('EPay下单异常: $e');
+        print('堆栈: $stack');
+      }
     }
   }
 
