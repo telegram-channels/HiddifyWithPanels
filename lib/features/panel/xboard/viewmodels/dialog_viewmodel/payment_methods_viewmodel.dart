@@ -21,50 +21,66 @@ class PaymentMethodsViewModel extends ChangeNotifier {
   });
 
   Future<void> handlePayment(dynamic selectedMethod) async {
-    final accessToken = await getToken(); // 获取用户的token
+    if (selectedMethod == null || selectedMethod is! Map || !selectedMethod.containsKey('id')) {
+      if (kDebugMode) {
+        print('支付方式无效或未选择。');
+      }
+      return;
+    }
+
+    final accessToken = await getToken();
+    if (accessToken == null) {
+      if (kDebugMode) {
+        print('未获取到有效的 accessToken，无法支付。');
+      }
+      return;
+    }
+
     try {
-      // 调用 submitOrder 并获取完整的响应字典
       final response = await _purchaseService.submitOrder(
         tradeNo,
         selectedMethod['id'].toString(),
-        accessToken!,
+        accessToken,
       );
 
       if (kDebugMode) {
         print('支付响应: $response');
       }
 
-      // 获取 type 和 data 字段
       final type = response['type'];
       final data = response['data'];
 
-      // 确保 type 是 int 并且 data 是期望的类型
       if (type is int) {
-        // 如果 type 为 -1 且 data 为 true，表示订单已通过钱包余额支付成功
         if (type == -1 && data == true) {
           if (kDebugMode) {
             print('订单已通过钱包余额支付成功，无需跳转支付页面');
           }
-          handlePaymentSuccess(); // 直接处理支付成功
+          handlePaymentSuccess();
           return;
         }
 
-        // 如果 type 为 1 且 data 是 String 类型，认为它是支付链接
         if (type == 1 && data is String) {
-          openPaymentUrl(data); // 打开支付链接
-          monitorOrderStatus(); // 开始监听订单状态
+          if (_isValidUrl(data)) {
+            openPaymentUrl(data);
+            monitorOrderStatus();
+          } else {
+            if (kDebugMode) {
+              print('支付链接无效: $data');
+            }
+          }
           return;
         }
       }
 
-      // 处理其他未知情况
       if (kDebugMode) {
         print('支付处理失败: 意外的响应。');
       }
-    } catch (e) {
+    } catch (e, stack) {
       if (kDebugMode) {
         print('支付错误: $e');
+        print('堆栈: $stack');
       }
+      // 可选: 你可以在这里通知 UI 层显示错误提示
     }
   }
 
@@ -77,26 +93,43 @@ class PaymentMethodsViewModel extends ChangeNotifier {
 
   Future<void> monitorOrderStatus() async {
     final accessToken = await getToken();
-    if (accessToken == null) return;
+    if (accessToken == null) {
+      if (kDebugMode) {
+        print('无法监听订单状态: accessToken 为空');
+      }
+      return;
+    }
 
-   MonitorPayStatus().monitorOrderStatus(tradeNo, accessToken, (bool isPaid, {String? message}) {
-  if (isPaid) {
-    if (kDebugMode) {
-      print('订单支付成功');
-    }
-    handlePaymentSuccess();
-  } else {
-    if (kDebugMode) {
-      print('订单未支付');
-    }
-    // You may handle the message if needed:
-    // if (message != null) print(message);
-  }
-});
+    MonitorPayStatus().monitorOrderStatus(
+      tradeNo,
+      accessToken,
+      (bool isPaid, {String? message}) {
+        if (isPaid) {
+          if (kDebugMode) {
+            print('订单支付成功');
+          }
+          handlePaymentSuccess();
+        } else {
+          if (kDebugMode) {
+            print('订单未支付');
+            if (message != null) print('支付消息: $message');
+          }
+        }
+      },
+    );
   }
 
   void openPaymentUrl(String paymentUrl) {
-    final Uri url = Uri.parse(paymentUrl);
-    launchUrl(url);
+    final Uri? url = Uri.tryParse(paymentUrl);
+    if (url != null) {
+      launchUrl(url);
+    } else if (kDebugMode) {
+      print('无法解析支付链接: $paymentUrl');
+    }
+  }
+
+  bool _isValidUrl(String url) {
+    final uri = Uri.tryParse(url);
+    return uri != null && (uri.isScheme('http') || uri.isScheme('https'));
   }
 }
