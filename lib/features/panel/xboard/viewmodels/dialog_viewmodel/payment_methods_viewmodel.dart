@@ -79,18 +79,20 @@ class PaymentMethodsViewModel extends ChangeNotifier {
     final accessToken = await getToken();
     if (accessToken == null) return;
 
-    MonitorPayStatus().monitorOrderStatus(tradeNo, accessToken, (bool isPaid) {
-      if (isPaid) {
-        if (kDebugMode) {
-          print('订单支付成功');
-        }
-        handlePaymentSuccess();
-      } else {
-        if (kDebugMode) {
-          print('订单未支付');
-        }
-      }
-    });
+   MonitorPayStatus().monitorOrderStatus(tradeNo, accessToken, (bool isPaid, {String? message}) {
+  if (isPaid) {
+    if (kDebugMode) {
+      print('订单支付成功');
+    }
+    handlePaymentSuccess();
+  } else {
+    if (kDebugMode) {
+      print('订单未支付');
+    }
+    // You may handle the message if needed:
+    // if (message != null) print(message);
+  }
+});
   }
 
   void openPaymentUrl(String paymentUrl) {
