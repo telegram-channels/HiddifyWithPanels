@@ -1,6 +1,5 @@
 // services/order_service.dart
 import 'package:hiddify/features/panel/xboard/models/order_model.dart';
-
 import 'package:hiddify/features/panel/xboard/services/http_service/http_service.dart';
 
 class OrderService {
@@ -13,38 +12,60 @@ class OrderService {
     );
 
     if (result["status"] == "success") {
-      final ordersJson = result["data"] as List;
-      return ordersJson
-          .map((json) => Order.fromJson(json as Map<String, dynamic>))
-          .toList();
+      final ordersJson = result["data"];
+      if (ordersJson is List) {
+        return ordersJson
+            .map((json) => Order.fromJson(json as Map<String, dynamic>))
+            .toList();
+      } else {
+        print("ordersJson 不是 List: $ordersJson");
+        return [];
+      }
     } else {
-      throw Exception("Failed to fetch user orders: ${result['message']}");
+      final msg = result['message'] ?? "未知错误";
+      print("Failed to fetch user orders: $msg");
+      throw Exception("Failed to fetch user orders: $msg");
     }
   }
 
   Future<Map<String, dynamic>> getOrderDetails(
       String tradeNo, String accessToken) async {
-    return await _httpService.getRequest(
-      "/api/v1/user/order/detail?trade_no=$tradeNo",
-      headers: {'Authorization': accessToken},
-    );
+    try {
+      return await _httpService.getRequest(
+        "/api/v1/user/order/detail?trade_no=$tradeNo",
+        headers: {'Authorization': accessToken},
+      );
+    } catch (e) {
+      print("getOrderDetails error: $e");
+      throw Exception("获取订单详情失败: $e");
+    }
   }
 
   Future<Map<String, dynamic>> cancelOrder(
       String tradeNo, String accessToken) async {
-    return await _httpService.postRequest(
-      "/api/v1/user/order/cancel",
-      {"trade_no": tradeNo},
-      headers: {'Authorization': accessToken},
-    );
+    try {
+      return await _httpService.postRequest(
+        "/api/v1/user/order/cancel",
+        {"trade_no": tradeNo},
+        headers: {'Authorization': accessToken},
+      );
+    } catch (e) {
+      print("cancelOrder error: $e");
+      throw Exception("取消订单失败: $e");
+    }
   }
 
   Future<Map<String, dynamic>> createOrder(
       String accessToken, int planId, String period) async {
-    return await _httpService.postRequest(
-      "/api/v1/user/order/save",
-      {"plan_id": planId, "period": period},
-      headers: {'Authorization': accessToken},
-    );
+    try {
+      return await _httpService.postRequest(
+        "/api/v1/user/order/save",
+        {"plan_id": planId, "period": period},
+        headers: {'Authorization': accessToken},
+      );
+    } catch (e) {
+      print("createOrder error: $e");
+      throw Exception("创建订单失败: $e");
+    }
   }
 }
