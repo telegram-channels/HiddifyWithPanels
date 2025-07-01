@@ -9,7 +9,7 @@ class MonitorPayStatus {
     Function(bool, {String? message}) onPaymentStatusChanged,
   ) async {
     bool isPaymentComplete = false;
-    const int maxPollingDuration = 20 * 60; // 20 minutes in seconds
+    const int maxPollingDuration = 20 * 60; // 20分钟，单位：秒
     int elapsedTime = 0;
 
     Timer.periodic(const Duration(seconds: 10), (timer) async {
