@@ -16,7 +16,15 @@ on:
       channel:
         type: string
         default: "dev"
-
+      clean-before-build:
+        type: boolean
+        default: false
+      upgrade-dependencies:
+        type: boolean
+        default: false
+      run-build-runner:
+        type: boolean
+        default: false
 
 env:
   IS_GITHUB_ACTIONS: 1
@@ -48,8 +56,22 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Clean project
+        if: ${{ inputs.clean-before-build }}
+        run: |
+          flutter clean
+          rm -rf .dart_tool build
+
       - name: Setup dependencies
         run: make linux-install-dependencies
+
+      - name: Upgrade dependencies
+        if: ${{ inputs.upgrade-dependencies }}
+        run: flutter pub upgrade
+
+      - name: Run build_runner
+        if: ${{ inputs.run-build-runner }}
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Prepare for Linux
         run: make linux-prepare
@@ -101,17 +123,31 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: '17'
-          
+
+      - name: Clean project
+        if: ${{ inputs.clean-before-build }}
+        run: |
+          flutter clean
+          rm -rf .dart_tool build
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Upgrade dependencies
+        if: ${{ inputs.upgrade-dependencies }}
+        run: flutter pub upgrade
+
+      - name: Run build_runner
+        if: ${{ inputs.run-build-runner }}
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Prepare for Android
         run: |
           make android-prepare
           tree
           
-      - name: Install Dependencies
-        run: |
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-          dart run slang
+      - name: Install Slang
+        run: dart run slang
 
       - name: Build APK
         run: |
@@ -139,11 +175,22 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install Dependencies
+      - name: Clean project
+        if: ${{ inputs.clean-before-build }}
         run: |
-          flutter pub get
-          dart run build_runner build --delete-conflicting-outputs
-          dart run slang
+          flutter clean
+          rm -rf .dart_tool build
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Upgrade dependencies
+        if: ${{ inputs.upgrade-dependencies }}
+        run: flutter pub upgrade
+
+      - name: Run build_runner
+        if: ${{ inputs.run-build-runner }}
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Prepare for Windows
         run: |
@@ -183,9 +230,23 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Clean project
+        if: ${{ inputs.clean-before-build }}
+        run: |
+          flutter clean
+          rm -rf .dart_tool build
+
       - name: Setup dependencies
         run: |
           make macos-install-dependencies
+
+      - name: Upgrade dependencies
+        if: ${{ inputs.upgrade-dependencies }}
+        run: flutter pub upgrade
+
+      - name: Run build_runner
+        if: ${{ inputs.run-build-runner }}
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Prepare for macOS
         run: |
@@ -224,14 +285,23 @@ jobs:
           channel: 'stable'
           cache: true
   
-      - name: Clean Flutter Build
+      - name: Clean project
+        if: ${{ inputs.clean-before-build }}
         run: |
           flutter clean
-  
+          rm -rf .dart_tool build
+
       - name: Get Flutter Packages
-        run: |
-          flutter pub get
-  
+        run: flutter pub get
+
+      - name: Upgrade dependencies
+        if: ${{ inputs.upgrade-dependencies }}
+        run: flutter pub upgrade
+
+      - name: Run build_runner
+        if: ${{ inputs.run-build-runner }}
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Reinstall iOS Dependencies
         run: |
           cd ios
