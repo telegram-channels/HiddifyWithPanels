@@ -76,6 +76,8 @@
         "selectPrice": "请选择价格"
         "paymentSuccess": "支付成功！",
         "paymentFailed": "支付失败。"
+        "paymentSuccess": "Payment successful!",
+        "paymentFailed": "Payment failed."
     },
     "payments": {
         "noPayments": "没有可用的支付方式",
