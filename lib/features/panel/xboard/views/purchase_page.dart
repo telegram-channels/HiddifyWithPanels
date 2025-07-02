@@ -6,7 +6,6 @@ import 'package:hiddify/features/panel/xboard/models/plan_model.dart';
 import 'package:hiddify/features/panel/xboard/services/purchase_service.dart';
 import 'package:hiddify/features/panel/xboard/utils/price_widget.dart';
 import 'package:hiddify/features/panel/xboard/viewmodels/purchase_viewmodel.dart';
-
 import 'package:hiddify/features/panel/xboard/views/components/dialog/purchase_details_dialog.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -25,26 +24,23 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
   @override
   void initState() {
     super.initState();
-    // Delay the provider modification until after the first frame is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(purchaseViewModelProvider).fetchPlans();
     });
   }
 
-  // 添加的支付处理方法
+  // 支付处理：跳转到支付接口
   Future<void> _handlePayment(
       Plan plan, BuildContext context, Translations t, WidgetRef ref) async {
-    // 你可以在这里集成你的支付SDK逻辑
-    // 这里只是一个示例，模拟支付结果
-    final paymentResult = await PurchaseService().pay(plan); // 示例：你的支付逻辑
+    final paymentResult = await PurchaseService().pay(plan, context);
     if (paymentResult.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.purchase.paymentSuccess)),
+        SnackBar(content: Text(paymentResult.message ?? t.purchase.paymentSuccess)),
       );
-      // 支付成功后的其它逻辑，比如刷新订单、关闭弹窗等
+      // 可选：支付成功后刷新订单等逻辑
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.purchase.paymentFailed)),
+        SnackBar(content: Text(paymentResult.message ?? t.purchase.paymentFailed)),
       );
     }
   }
@@ -57,11 +53,13 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(t.purchase.pageTitle),
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () {
-            Scaffold.of(context).openDrawer();
-          },
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
         ),
         actions: [
           TextButton(
@@ -70,14 +68,14 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
             },
             child: Text(
               t.order.title,
-              style: TextStyle(fontSize: 16, color: Colors.black),
+              style: const TextStyle(fontSize: 16, color: Colors.black),
             ),
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await ref.read(purchaseViewModelProvider).fetchPlans(); // 强制刷新
+          await ref.read(purchaseViewModelProvider).fetchPlans();
         },
         child: Builder(
           builder: (context) {
@@ -137,7 +135,6 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 调整价格字体
                 PriceWidget(
                   plan: plan,
                   priceLabel: t.purchase.priceLabel,
