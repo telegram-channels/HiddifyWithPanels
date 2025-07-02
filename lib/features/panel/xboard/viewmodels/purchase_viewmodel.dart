@@ -30,4 +30,9 @@ class PurchaseViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  // 支付方法（可选：用于直接在 ViewModel 触发支付，并可扩展支付状态管理）
+  Future<PaymentResult> pay(Plan plan, BuildContext context) async {
+    return await _purchaseService.pay(plan, context);
+  }
 }
