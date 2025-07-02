@@ -37,6 +37,19 @@ class Plan {
     this.updatedAt,
   });
 
+  // 添加 periods getter
+  List<String> get periods {
+    final List<String> result = [];
+    if (monthPrice != null) result.add('month');
+    if (quarterPrice != null) result.add('quarter');
+    if (halfYearPrice != null) result.add('halfYear');
+    if (yearPrice != null) result.add('year');
+    if (twoYearPrice != null) result.add('twoYear');
+    if (threeYearPrice != null) result.add('threeYear');
+    if (onetimePrice != null) result.add('onetime');
+    return result;
+  }
+
   factory Plan.fromJson(Map<String, dynamic> json) {
     // 清理 HTML 标签
     final rawContent = json['content'] ?? '';
