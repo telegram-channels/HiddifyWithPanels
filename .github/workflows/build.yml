@@ -175,11 +175,14 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Clean project
+      # Windows专用清理
+      - name: Clean project (Windows)
         if: ${{ inputs.clean-before-build }}
         run: |
           flutter clean
-          rm -rf .dart_tool build
+          if (Test-Path ".dart_tool") { Remove-Item -Recurse -Force ".dart_tool" }
+          if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
+        shell: pwsh
 
       - name: Install Dependencies
         run: flutter pub get
