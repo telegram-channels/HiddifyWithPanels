@@ -29,4 +29,6 @@ jobs:
     if: "${{!contains(github.event.head_commit.message, 'release: version')}}"
     with:
       upload-artifact: ${{ github.event_name == 'push' }}
-      
+      clean-before-build: true
+      upgrade-dependencies: true
+      run-build-runner: true
