@@ -9,6 +9,13 @@ import 'package:hiddify/features/panel/xboard/utils/storage/token_storage.dart';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+// 支付结果类型
+class PaymentResult {
+  final bool success;
+  final String? message;
+  PaymentResult({required this.success, this.message});
+}
+
 class PurchaseService {
   Future<List<Plan>> fetchPlanData() async {
     final accessToken = await getToken();
@@ -44,5 +51,13 @@ class PurchaseService {
   Future<Map<String, dynamic>> submitOrder(
       String tradeNo, String method, String accessToken) async {
     return await _paymentService.submitOrder(tradeNo, method, accessToken);
+  }
+
+  // 新增的 pay 方法
+  Future<PaymentResult> pay(Plan plan) async {
+    // 你可以在这里实现具体的支付流程
+    // 这里只做示例，始终返回成功
+    await Future.delayed(Duration(seconds: 1)); // 模拟耗时
+    return PaymentResult(success: true, message: "Mock payment success");
   }
 }
