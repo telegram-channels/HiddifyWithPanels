@@ -31,6 +31,24 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
     });
   }
 
+  // 添加的支付处理方法
+  Future<void> _handlePayment(
+      Plan plan, BuildContext context, Translations t, WidgetRef ref) async {
+    // 你可以在这里集成你的支付SDK逻辑
+    // 这里只是一个示例，模拟支付结果
+    final paymentResult = await PurchaseService().pay(plan); // 示例：你的支付逻辑
+    if (paymentResult.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.purchase.paymentSuccess)),
+      );
+      // 支付成功后的其它逻辑，比如刷新订单、关闭弹窗等
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t.purchase.paymentFailed)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
@@ -89,7 +107,7 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
     );
   }
 
-Widget _buildPlanCard(
+  Widget _buildPlanCard(
     Plan plan,
     Translations t,
     BuildContext context,
@@ -125,11 +143,12 @@ Widget _buildPlanCard(
                   priceLabel: t.purchase.priceLabel,
                   currency: t.purchase.rmb,
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold,),
+                    fontSize: 20, fontWeight: FontWeight.bold,
+                  ),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    showPurchaseDialog(context, plan, t, ref);
+                  onPressed: () async {
+                    await _handlePayment(plan, context, t, ref);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
