@@ -74,6 +74,8 @@
         "unknown": "Unknown",
         "close": "Close",
         "selectPrice": "Please select a price"
+        "paymentSuccess": "Payment successful!",
+        "paymentFailed": "Payment failed."
     },
     "payments": {
         "noPayments": "No Payments",
